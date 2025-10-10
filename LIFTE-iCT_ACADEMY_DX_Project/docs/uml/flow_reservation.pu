@@ -1,0 +1,21 @@
+@startuml
+title 申込〜通知フロー
+start
+:申込みを受領(チャネル=Wix/LINE/SMS/Gmail);
+:取込APIへ(Webhook/CSV);
+:重複チェック;
+if (重複あり?) then (Yes)
+:エラーレスポンス/再入力依頼;
+stop
+else (No)
+:承認要求;
+if (承認?) then (承認)
+:予約カレンダーに登録;
+:通知送信(LINE/SMS/メール);
+:入金記録(任意);
+else (差戻し/取消)
+:申込を差戻し/取消;
+endif
+endif
+stop
+@enduml

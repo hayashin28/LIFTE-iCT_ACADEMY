@@ -1,0 +1,260 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8" />
+  <title>配管工の冒険 1-1</title>
+  <style>
+    /* ページ全体の初期化 */
+    html, body {
+      margin: 0;
+      padding: 0;
+      background: black;
+      height: 100%;
+      overflow: hidden;
+    }
+    #game {
+      position: relative;
+      width: 100vw;
+      height: 100vh;
+      background-color: #5c94fc;
+      image-rendering: pixelated;
+      overflow: hidden;
+    }
+    .ground {
+      position: absolute;
+      bottom: 0;
+      width: 100%;
+      height: 64px;
+      background: url("png/jimen.png") repeat-x;
+      background-size: contain;
+    }
+    #mario {
+      position: absolute;
+      width: 48px;
+      height: 48px;
+      left: 50px;
+      bottom: 64px;
+      background-image: url("png/mario.png");
+      background-size: cover;
+      transition: transform 0.1s;
+    }
+    #mario.jump {
+      background-image: url("png/mario_junp.png");
+    }
+    #score, #world, #time {
+      position: absolute;
+      color: white;
+      font-family: monospace;
+      font-size: 18px;
+      text-shadow: 1px 1px #000;
+      z-index: 100;
+    }
+    #score { top: 10px; left: 10px; }
+    #world { top: 10px; left: 50%; transform: translateX(-50%); text-align: center; }
+    #time { top: 10px; right: 10px; text-align: right; }
+    .cloud {
+      position: absolute;
+      width: 120px;
+      height: auto;
+    }
+    .mountain {
+      position: absolute;
+      bottom: 64px;
+      height: 160px;
+      width: auto;
+    }
+    .pipe {
+      position: absolute;
+      width: 64px;
+      height: auto;
+      bottom: 64px;
+      z-index: 10;
+    }
+    .block {
+      position: absolute;
+      width: 48px;
+      height: 48px;
+      background-size: cover;
+    }
+    .question { background-image: url("png/question_block.png"); }
+    .brick    { background-image: url("png/brick_block.png"); }
+    .goomba {
+      position: absolute;
+      width: 48px;
+      height: 48px;
+      background-image: url("png/goomba.png");
+      background-size: cover;
+      transition: transform 0.1s;
+      z-index: 5;
+    }
+  </style>
+</head>
+<body>
+  <audio id="bgm" src="bgm.mp3" loop preload="auto"></audio>
+  <div id="game">
+    <div id="score">MARIO<br>000000</div>
+    <div id="world">WORLD<br>1-1</div>
+    <div id="time">TIME<br><span id="timer">400</span></div>
+    <img src="png/cloud.png" class="cloud" style="top: 80px; left: 100px;" />
+    <img src="png/cloud.png" class="cloud" style="top: 100px; right: 100px;" />
+    <img src="png/mountain.png" class="mountain" style="left: 400px;" />
+    <img src="png/dokan.png" class="pipe" style="left: 1000px;" />
+    <div id="mario"></div>
+    <div class="block question" style="left: 500px; bottom: 160px;"></div>
+    <div class="block brick"    style="left: 548px; bottom: 160px;"></div>
+    <div class="block question" style="left: 596px; bottom: 160px;"></div>
+    <div class="block brick"    style="left: 644px; bottom: 160px;"></div>
+    <div class="block question" style="left: 692px; bottom: 160px;"></div>
+    <div class="ground"></div>
+  </div>
+  <script>
+    // ▼▼▼ JavaScriptゲームロジック ▼▼▼
+
+    // マリオに関する初期設定
+    const mario = document.getElementById("mario");
+    const marioWidth = 48; // マリオの幅
+    let posX = 50;         // 横位置（初期）
+    let posY = 64;         // 縦位置（地面の上）
+    let vy = 0;            // 垂直速度
+    let gravity = -1.2;    // 重力値（小さくするとふわっとする）
+    let isJumping = false; // ジャンプ中フラグ
+    const groundHeight = 64; // 地面の高さ（背景画像と一致）
+    const jumpPower = 12;  // ジャンプの強さ
+
+    // すべての土管を取得（ぶつかり判定用）
+    const pipes = Array.from(document.querySelectorAll(".pipe"));
+
+    // マリオの動きを更新する関数（約30fps）
+    function updateMario() {
+      vy += gravity;    // 重力の影響で速度が減速
+      posY += vy;       // 速度分だけ位置を更新
+
+      // 地面に接したら落下停止
+      if (posY <= groundHeight) {
+        posY = groundHeight;
+        vy = 0;
+        if (isJumping) {
+          mario.classList.remove("jump"); // ジャンプ画像から戻す
+        }
+        isJumping = false;
+      }
+
+      // 左右画面端の制限
+      const maxX = window.innerWidth - marioWidth;
+      if (posX < 0) posX = 0;
+      if (posX > maxX) posX = maxX;
+
+      // スタイルに位置反映
+      mario.style.left = posX + "px";
+      mario.style.bottom = posY + "px";
+    }
+
+    // マリオの次の位置が土管とぶつかるか判定
+    function isCollidingWithPipe(nextX) {
+      return pipes.some(pipe => {
+        const pipeX = pipe.offsetLeft;
+        const pipeWidth = pipe.offsetWidth;
+        return (
+          nextX + marioWidth > pipeX &&
+          nextX < pipeX + pipeWidth
+        );
+      });
+    }
+
+    // ジャンプ処理
+    function jump() {
+      if (!isJumping) {
+        vy = jumpPower;         // 垂直速度にジャンプ力を与える
+        isJumping = true;       // ジャンプ中に設定
+        mario.classList.add("jump"); // ジャンプ画像に切り替え
+      }
+    }
+
+    // クリックでジャンプ
+    document.addEventListener("mousedown", jump);
+
+    // マウスの左右移動でマリオを左右へ移動
+    document.addEventListener("mousemove", (e) => {
+      const center = window.innerWidth / 2;        // 画面中央を基準
+      const direction = e.clientX < center ? -1 : 1; // 左右を判定
+      const nextX = posX + (5 * direction);        // 進む位置
+
+      if (!isCollidingWithPipe(nextX)) {
+        posX = nextX;
+      }
+      mario.style.transform = `scaleX(${direction})`; // 向きの変更
+    });
+
+    // 一定間隔でマリオの位置更新（約30fps）
+    setInterval(updateMario, 30);
+
+    // タイマーの初期値と更新処理
+    let time = 400;
+    const timerElement = document.getElementById("timer");
+    setInterval(() => {
+      time--;
+      timerElement.textContent = time.toString().padStart(3, "0");
+    }, 1000); // 1秒ごとに減少
+
+    // クリボーが土管に当たるか確認
+    function isGoombaBlocked(x) {
+      return pipes.some(pipe => {
+        const pipeX = pipe.offsetLeft;
+        const pipeW = pipe.offsetWidth;
+        return (
+          x + 40 > pipeX &&
+          x + 8 < pipeX + pipeW
+        );
+      });
+    }
+
+    // クリボーの移動処理（方向転換＆画面外で削除）
+    function moveGoomba(goomba, startX, direction) {
+      let x = startX;
+      goomba.style.left = x + "px";
+      goomba.style.bottom = "64px";
+      goomba.style.transform = `scaleX(${direction})`;
+
+      const interval = setInterval(() => {
+        const nextX = x + 2 * direction;
+
+        if (isGoombaBlocked(nextX)) {
+          direction *= -1; // 向き反転
+          goomba.style.transform = `scaleX(${direction})`;
+        } else {
+          x = nextX;
+          goomba.style.left = x + "px";
+        }
+
+        if (x < -50 || x > window.innerWidth + 50) {
+          clearInterval(interval);
+          goomba.remove();
+          setTimeout(spawnGoomba, 2000); // 2秒後に再出現
+        }
+      }, 30);
+    }
+
+    // クリボーを生成して移動開始
+    function spawnGoomba() {
+      const goomba = document.createElement("div");
+      goomba.classList.add("goomba");
+      document.getElementById("game").appendChild(goomba);
+      moveGoomba(goomba, 920, -1); // 土管左から出現
+    }
+
+    // ゲーム開始時に1体目のクリボーを出す
+    window.onload = () => {
+      spawnGoomba();
+    };
+
+    // BGMを最初のユーザー操作で再生（自動再生制限対策）
+    document.addEventListener("pointerdown", () => {
+      const bgm = document.getElementById("bgm");
+      if (bgm.paused) {
+        bgm.volume = 0.5;
+        bgm.play();
+      }
+    }, { once: true }); // 最初の一回だけ
+  </script>
+</body>
+</html>
