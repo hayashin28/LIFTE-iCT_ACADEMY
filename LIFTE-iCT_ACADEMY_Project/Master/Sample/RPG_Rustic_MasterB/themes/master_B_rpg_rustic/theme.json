@@ -1,0 +1,21 @@
+{
+  "name": "RPG Rustic",
+  "palette": {
+    "bg": "#10200f",
+    "ui": "#2c2a24",
+    "panel": "#3b2a20",
+    "accent": "#eabc5e",
+    "hp": "#d04a3a",
+    "mp": "#3a78d0",
+    "text": "#ece1cf"
+  },
+  "font": {
+    "ui": ""
+  },
+  "battle": {
+    "menu_layout": "vertical-right",
+    "status_style": "text",
+    "cursor": "triangle",
+    "message_top_panel": false
+  }
+}

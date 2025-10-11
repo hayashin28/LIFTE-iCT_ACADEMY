@@ -1,0 +1,21 @@
+{
+  "name": "RPG Steel",
+  "palette": {
+    "bg": "#0e1420",
+    "ui": "#101821",
+    "panel": "#152232",
+    "accent": "#9b51e0",
+    "hp": "#56ccf2",
+    "mp": "#9b51e0",
+    "text": "#cfe6ff"
+  },
+  "font": {
+    "ui": ""
+  },
+  "battle": {
+    "menu_layout": "horizontal-bottom",
+    "status_style": "bars",
+    "cursor": "caret",
+    "message_top_panel": true
+  }
+}
