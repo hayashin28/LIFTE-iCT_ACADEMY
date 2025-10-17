@@ -6,9 +6,9 @@ from kivy.app import App
 from kivy.uix.screenmanager import ScreenManager, NoTransition
 from kivy.core.window import Window
 
-from src.config import WIDTH, HEIGHT
-from src.scenes.title import TitleScreen
-from src.scenes.play import PlayScreen
+from config import WIDTH, HEIGHT
+from scenes.title import TitleScreen
+from scenes.play import PlayScreen
 
 class GameScreenManager(ScreenManager):
     pass
