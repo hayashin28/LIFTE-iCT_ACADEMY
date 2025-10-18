@@ -4,8 +4,8 @@ game/spawner.py – 障害物生成（周期＋ランダム）
 """
 import random
 from typing import List
-from src import config
-from src.game.obstacle import Obstacle
+from .. import config
+from ..game.obstacle import Obstacle
 
 class Spawner:
     def __init__(self):

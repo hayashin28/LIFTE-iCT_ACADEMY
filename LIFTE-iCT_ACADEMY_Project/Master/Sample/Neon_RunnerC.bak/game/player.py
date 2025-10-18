@@ -12,7 +12,7 @@ from dataclasses import dataclass
 from typing import Tuple
 from time import monotonic
 
-from src import config
+from .. import config
 
 @dataclass
 class Player:

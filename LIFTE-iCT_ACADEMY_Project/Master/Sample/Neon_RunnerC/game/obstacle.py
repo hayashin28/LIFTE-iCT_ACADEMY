@@ -1,27 +1,40 @@
 # -*- coding: utf-8 -*-
 """
-game/obstacle.py – 障害物（レーン上の矩形）
+obstacle.py（障害物の最小モデル）
+--------------------------------------------------------------------
+■ なぜ / 目的
+  - src 依存なしのサンプルとして、config を参照する軽量なロジックを用意。
+
+■ 前提
+  - ルートの config から速度の基準値を得る。
+
+■ 入出力
+  - 入力: コンストラクタで初期座標、update(dt) でフレーム時間（秒）。
+  - 出力: 内部状態（x 座標）が更新される。
+
+■ 副作用
+  - なし（オブジェクト内部の値を変更するのみ）。
+
+■ 例外
+  - dt が負の場合、将来的には ValueError を投げても良い（今回は割愛）。
 """
-from dataclasses import dataclass
-from typing import Tuple
-from src import config
+from .. import config
 
-@dataclass
 class Obstacle:
-    lane: int
-    x: float
-    y: float
-    w: float = config.OBSTACLE_W
-    h: float = config.OBSTACLE_H
-    alive: bool = True
+    """
+    横スクロール想定の単純な障害物。
+    - 実ゲームではあたり判定やスプライト描画などを追加していきます。
+    """
+    def __init__(self, x: float = 0.0, y: float = 0.0) -> None:
+        self.x = float(x)
+        self.y = float(y)
+        # 基準速度の 80% で左に流れるサンプル設定
+        self.speed = float(config.PLAYER_SPEED) * 0.8
 
-    def rect(self) -> Tuple[float, float, float, float]:
-        half_w = self.w * 0.5
-        half_h = self.h * 0.5
-        return (self.x - half_w, self.y - half_h, self.x + half_w, self.y + half_h)
-
-    def update(self, dt: float, speed: float):
-        """下方向へスクロール"""
-        self.y -= speed * dt
-        if self.y < -self.h:  # 画面外で消去
-            self.alive = False
+    def update(self, dt: float) -> None:
+        """
+        位置更新。
+        :param dt: 経過時間（秒）
+        """
+        # 左方向（x マイナス）へ移動
+        self.x -= self.speed * float(dt)
