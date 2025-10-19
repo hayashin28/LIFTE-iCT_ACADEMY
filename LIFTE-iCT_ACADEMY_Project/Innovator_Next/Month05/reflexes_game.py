@@ -44,7 +44,7 @@ BoxLayout:
 # チューニング用の定数
 #--------------------
 # ゲームの残り時間
-GAME_SECOND = 45
+GAME_SECONDS = 45
 # ターゲットの出現感覚（秒）
 SPAWN_INTERVAL = 1.5
 
