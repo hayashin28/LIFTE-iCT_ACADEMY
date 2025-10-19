@@ -76,7 +76,7 @@ class SimpleButtonGame(MDApp):
     def start_game(self):
         # 見た目の初期化
         self.score = 0
-        self.time_left = GAME_SECOND
+        self.time_left = GAME_SECONDS
         self.root.ids.score_label.text = f'Score: {self.score}'
         self.root.ids.timer_label.text = f'Time: {self.time_left}'
         
