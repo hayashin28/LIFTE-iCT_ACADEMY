@@ -1,22 +1,7 @@
 # -*- coding: utf-8 -*-
-"""
-config.py（設定値の集約）
---------------------------------------------------------------------
-■ なぜ / 目的
-  - ゲーム全体で共有する設定値（ウィンドウサイズ・スピードなど）を一カ所で管理して、
-    参照・調整を容易にする。
-
-■ 前提
-  - パッケージから `from . import config` またはサブパッケージから `from .. import config` で参照。
-
-■ 入出力 / 副作用 / 例外
-  - 単なる定数定義のため特になし。
-"""
-APP_NAME: str = "Neon Runner C"
-VERSION: str = "clean-1.2-jp"
-
-WINDOW_WIDTH: int = 900
-WINDOW_HEIGHT: int = 600
-
-# ゲーム系の基本パラメータ
-PLAYER_SPEED: float = 5.0  # プレイヤーの標準速度（px/sec のイメージ）
+WIDTH, HEIGHT = 960, 540
+GROUND_Y = 120          # 地面の高さ（下からのオフセット）
+SPEED = 4.0             # スクロール速度（Day1では一定）
+JUMP_VEL = 11.5         # 初速（重力はGRAVITYで毎フレーム加算）
+GRAVITY = 0.55
+BG = (0.05, 0.06, 0.08, 1.0)
