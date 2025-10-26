@@ -1,0 +1,245 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <title>同期 vs 非同期 マリオ教材 完全版</title>
+  <style>
+    body {
+      margin: 0;
+      background: #5c94fc;
+      overflow: hidden;
+      font-family: sans-serif;
+    }
+    #game {
+      position: relative;
+      width: 100vw;
+      height: 100vh;
+    }
+    #mario {
+      position: absolute;
+      width: 48px;
+      height: 48px;
+      left: 100px;
+      bottom: 64px;
+      background: url('png/mario.png') no-repeat center/cover;
+      transition: transform 0.1s;
+    }
+    .ground {
+      position: absolute;
+      bottom: 0;
+      width: 100%;
+      height: 64px;
+      background: url('png/jimen.png') repeat-x;
+      background-size: contain;
+    }
+    .goomba {
+      position: absolute;
+      width: 48px;
+      height: 48px;
+      bottom: 64px;
+      background: url('png/goomba.png') no-repeat center/cover;
+    }
+    .cloud {
+      position: absolute;
+      width: 120px;
+      height: auto;
+    }
+    .mountain {
+      position: absolute;
+      bottom: 64px;
+      height: 160px;
+      width: auto;
+    }
+    .pipe {
+      position: absolute;
+      width: 64px;
+      height: auto;
+      bottom: 64px;
+      z-index: 10;
+    }
+    .block {
+      position: absolute;
+      width: 48px;
+      height: 48px;
+      background-size: cover;
+    }
+    .question { background-image: url("png/question_block.png"); }
+    .brick    { background-image: url("png/brick_block.png"); }
+    #modeBtn {
+      position: absolute;
+      top: 10px;
+      left: 10px;
+      padding: 10px 20px;
+      background: white;
+      border: 2px solid #333;
+      font-weight: bold;
+      cursor: pointer;
+      z-index: 100;
+    }
+  </style>
+</head>
+<body>
+  <div id="game">
+    <button id="modeBtn">現在モード：同期</button>
+    <div id="mario"></div>
+    <div class="ground"></div>
+    <img src="png/cloud.png" class="cloud" style="top: 80px; left: 100px;" />
+    <img src="png/cloud.png" class="cloud" style="top: 100px; right: 100px;" />
+    <img src="png/mountain.png" class="mountain" style="left: 400px;" />
+    <img src="png/dokan.png" class="pipe" style="left: 1000px;" />
+
+    <div class="block question" style="left: 500px; bottom: 160px;"></div>
+    <div class="block brick"    style="left: 548px; bottom: 160px;"></div>
+    <div class="block question" style="left: 596px; bottom: 160px;"></div>
+    <div class="block brick"    style="left: 644px; bottom: 160px;"></div>
+    <div class="block question" style="left: 692px; bottom: 160px;"></div>
+
+    <audio id="bgm" src="bgm.mp3" loop preload="auto"></audio>
+  </div>
+
+  <script>
+    const mario = document.getElementById("mario");
+    const modeBtn = document.getElementById("modeBtn");
+    const game = document.getElementById("game");
+    const bgm = document.getElementById("bgm");
+    const pipes = Array.from(document.querySelectorAll(".pipe"));
+
+    let posX = 100;
+    let posY = 64;
+    let vy = 0;
+    const gravity = -1.2;
+    const jumpPower = 12;
+    const marioWidth = 48;
+    let isJumping = false;
+    let isAsyncMode = false;
+
+    // BGM再生（初回クリック時）
+    document.addEventListener("pointerdown", () => {
+      if (bgm.paused) {
+        bgm.volume = 0.5;
+        bgm.play();
+      }
+    }, { once: true });
+
+    // モード切替ボタン
+    modeBtn.addEventListener("click", () => {
+      isAsyncMode = !isAsyncMode;
+      modeBtn.textContent = "現在モード：" + (isAsyncMode ? "非同期" : "同期");
+    });
+
+    function sleep(ms) {
+      const end = Date.now() + ms;
+      while (Date.now() < end) {}
+    }
+
+    function updateMarioPosition() {
+      mario.style.left = posX + "px";
+      mario.style.bottom = posY + "px";
+    }
+
+    function jumpSync() {
+      if (isJumping) return;
+      isJumping = true;
+      vy = jumpPower;
+      while (posY > 64 || vy > 0) {
+        vy += gravity;
+        posY += vy;
+        if (posY < 64) posY = 64;
+        updateMarioPosition();
+        sleep(30);
+      }
+      vy = 0;
+      isJumping = false;
+    }
+
+    function jumpAsync() {
+      if (isJumping) return;
+      isJumping = true;
+      vy = jumpPower;
+      const interval = setInterval(() => {
+        vy += gravity;
+        posY += vy;
+        if (posY <= 64) {
+          posY = 64;
+          vy = 0;
+          isJumping = false;
+          clearInterval(interval);
+        }
+        updateMarioPosition();
+      }, 30);
+    }
+
+    document.addEventListener("click", () => {
+      if (isAsyncMode) {
+        jumpAsync();
+      } else {
+        jumpSync();
+      }
+    });
+
+    // マウス左右移動でマリオを左右に移動（土管回避あり）
+    document.addEventListener("mousemove", (e) => {
+      const center = window.innerWidth / 2;
+      const direction = e.clientX < center ? -1 : 1;
+      const nextX = posX + 5 * direction;
+      const maxX = window.innerWidth - marioWidth;
+
+      // 土管との衝突回避
+      const blocked = pipes.some(pipe => {
+        const pipeX = pipe.offsetLeft;
+        const pipeW = pipe.offsetWidth;
+        return nextX + marioWidth > pipeX && nextX < pipeX + pipeW;
+      });
+
+      if (!blocked) {
+        posX = Math.max(0, Math.min(nextX, maxX));
+        mario.style.transform = `scaleX(${direction})`;
+        updateMarioPosition();
+      }
+    });
+
+    // クリボーの移動と生成（非同期）
+    function moveGoomba(goomba, startX, direction) {
+      let x = startX;
+      goomba.style.left = x + "px";
+      goomba.style.bottom = "64px";
+      goomba.style.transform = `scaleX(${direction})`;
+
+      const interval = setInterval(() => {
+        const nextX = x + 2 * direction;
+
+        // 土管にぶつかると方向転換
+        if (pipes.some(pipe => {
+          const pipeX = pipe.offsetLeft;
+          const pipeW = pipe.offsetWidth;
+          return nextX + 40 > pipeX && nextX + 8 < pipeX + pipeW;
+        })) {
+          direction *= -1;
+          goomba.style.transform = `scaleX(${direction})`;
+        } else {
+          x = nextX;
+          goomba.style.left = x + "px";
+        }
+
+        if (x < -50 || x > window.innerWidth + 50) {
+          clearInterval(interval);
+          goomba.remove();
+          setTimeout(spawnGoomba, 2000);
+        }
+      }, 30);
+    }
+
+    function spawnGoomba() {
+      const goomba = document.createElement("div");
+      goomba.classList.add("goomba");
+      game.appendChild(goomba);
+      moveGoomba(goomba, 920, -1);
+    }
+
+    window.onload = () => {
+      updateMarioPosition();
+      spawnGoomba();
+    };
+  </script>
+</body>
+</html>
