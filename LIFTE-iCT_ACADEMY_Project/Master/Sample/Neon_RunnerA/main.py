@@ -24,7 +24,7 @@ class Game(Widget):
             self.player_rect = Rectangle(pos=self.player_pos, size=self.player_size)
 
         self.hud = Label(text="Score: 0", pos=(10, Window.height-30),
-                         size_hint=(None, None))
+                        size_hint=(None, None))
         self.add_widget(self.hud)
 
         Clock.schedule_interval(self.update, 1/60)
