@@ -9,7 +9,7 @@ Step02: 背景に「雲」を足すステップ
 
 from pathlib import Path
 
-from kivy.app import App
+from kivymd.app import MDApp as App
 from kivy.uix.widget import Widget
 from kivy.uix.image import Image
 from kivy.core.window import Window
@@ -17,7 +17,7 @@ from kivy.core.window import Window
 
 # パスの作り方は Step01 と同じです
 BASE_DIR = Path(__file__).resolve().parent
-ASSETS_DIR = BASE_DIR / "retro_mario" / "assets"
+ASSETS_DIR = BASE_DIR / "assets"
 IMG_DIR = ASSETS_DIR / "img"
 
 
@@ -27,7 +27,7 @@ def first_existing(*candidates: Path) -> str:
         if p.is_file():
             return str(p)
     raise FileNotFoundError(
-        "必要な画像ファイルが見つかりません。retro_mario/assets/img を確認してください。"
+        "必要な画像ファイルが見つかりません。assets/img を確認してください。"
     )
 
 

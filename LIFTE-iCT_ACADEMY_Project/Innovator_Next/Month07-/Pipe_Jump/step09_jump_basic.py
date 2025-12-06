@@ -9,7 +9,7 @@ Step09: 重力＋ジャンプ＋縦の当たり判定を追加するステップ
 
 from pathlib import Path
 
-from kivy.app import App
+from kivymd.app import MDApp as App
 from kivy.uix.widget import Widget
 from kivy.uix.image import Image
 from kivy.core.window import Window
@@ -18,7 +18,7 @@ from kivy.properties import BooleanProperty, NumericProperty
 
 
 BASE_DIR = Path(__file__).resolve().parent
-ASSETS_DIR = BASE_DIR / "retro_mario" / "assets"
+ASSETS_DIR = BASE_DIR / "assets"
 IMG_DIR = ASSETS_DIR / "img"
 
 
@@ -27,7 +27,7 @@ def first_existing(*candidates: Path) -> str:
     for p in candidates:
         if p.is_file():
             return str(p)
-    raise FileNotFoundError("必要な画像が足りません。retro_mario/assets/img を確認してください。")
+    raise FileNotFoundError("必要な画像が足りません。assets/img を確認してください。")
 
 
 class Hero(Image):
