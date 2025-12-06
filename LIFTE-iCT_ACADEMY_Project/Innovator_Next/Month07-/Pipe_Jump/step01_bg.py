@@ -94,7 +94,7 @@ class Step01BackgroundApp(App):
 
     def build(self):
         # ウィンドウの初期サイズを決めておきます（フルHD の半分くらい）
-        Window.size = (760, 540)
+        Window.size = (800, 540)
 
         # ウィンドウに表示するタイトル(左上などに出る名前)
         self.title = "Pipe & Jump 10 Lessons - Step01 Background"

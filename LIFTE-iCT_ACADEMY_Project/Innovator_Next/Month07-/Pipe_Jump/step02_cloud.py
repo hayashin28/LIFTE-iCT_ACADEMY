@@ -51,7 +51,8 @@ class BackgroundWithClouds(Widget):
             source=bg_path,
             allow_stretch=True,
             keep_ratio=False,
-            size_hint=(1, 1),
+            size=Window.size,       
+            size_hint=(None, None), 
             pos=(0, 0),
         )
         self.add_widget(bg)
@@ -61,7 +62,7 @@ class BackgroundWithClouds(Widget):
         cloud_positions = [
             (80, 360),
             (420, 420),
-            (720, 360),
+            (620, 360),
         ]
         for x, y in cloud_positions:
             cloud = Image(
@@ -77,7 +78,7 @@ class Step02CloudApp(App):
     """Step02 用アプリ本体"""
 
     def build(self):
-        Window.size = (960, 540)
+        Window.size = (800, 540)
         self.title = "Pipe & Jump 10 Lessons - Step02 Clouds"
         return BackgroundWithClouds()
 
