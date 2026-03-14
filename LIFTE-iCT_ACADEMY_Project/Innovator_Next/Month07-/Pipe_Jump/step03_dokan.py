@@ -1,87 +1,95 @@
-# step03_dokan.py
-"""
-Step03: 土管を追加するステップ
-
-★ねらい
-- 背景 + 雲 にくわえて、「地面のもの（土管）」を追加する
-- 土管もただの画像であり、「置き方は雲と同じ」という感覚をつかむ
-"""
-
-from pathlib import Path
-
-from kivymd.app import MDApp as App
-from kivy.uix.widget import Widget
-from kivy.uix.image import Image
-from kivy.core.window import Window
+from pathlib import Path             # ファイルやフォルダの場所を扱う標準ライブラリ
+from kivymd.app import MDApp as App  # kivyアプリの土台となるクラス
+from kivy.uix.widget import Widget   # 画面に置ける「何もない箱」のようなもの
+from kivy.uix.image import Image     # 画面を表示するための部品
+from kivy.core.window import Window  # ウインドウの大きさ等を扱うもの
 
 
+#----------------------------------------------
+# 画像ファイルが入っているフォルダへの「道」を作る
+#----------------------------------------------
 BASE_DIR = Path(__file__).resolve().parent
-ASSETS_DIR = BASE_DIR / "assets"
-IMG_DIR = ASSETS_DIR / "img"
+
+# assets/img フォルダまでのパスを組み立てる
+ASSETS_DIR = BASE_DIR / 'assets'
+IMG_DIR = ASSETS_DIR / 'img'
 
 
 def first_existing(*candidates: Path) -> str:
-    """画像ファイル候補の中から、最初に見つかったものを返します。"""
+    
     for p in candidates:
-        if p.is_file():
+        if p.is_file(): # 実際にそのファイルが存在するか
             return str(p)
+    
+    # 処理がここに来ている時点でファイルが存在しなかったことになる
     raise FileNotFoundError(
-        "必要な画像(bg.png/bg.jpg/cloud.png/dokan.png)が足りません。assets/img を確認してください。"
+        "背景画像が見つかりません。assets/img に dokan.png を置いてください。"
     )
 
 
+#----------------------------------------------
+# 背景画像 + 雲 + 土管 を表示する
+#----------------------------------------------
 class BackgroundCloudsPipe(Widget):
-    """
-    背景 + 雲 + 土管 を表示する画面。
-    ここでは、まだ当たり判定はつけません（飾りとして出すだけ）。
-    """
-
+    
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
 
-        bg_path = first_existing(IMG_DIR / "bg.png", IMG_DIR / "bg.jpg")
-        cloud_path = first_existing(IMG_DIR / "cloud.png")
-        dokan_path = first_existing(IMG_DIR / "dokan.png")
-
-        # 背景
+        # 背景画像と雲画像のパスを探す
+        # bg.png か bg.jpg のどちらでも対応できるようにする
+        bg_path = first_existing(IMG_DIR / 'bg.png', IMG_DIR / 'bg.jpg')
+        cloud_path = first_existing(IMG_DIR / 'cloud.png')
+        dokan_path = first_existing(IMG_DIR / 'dokan.png')
+        
+        # 先ずは背景を一番下に敷きます
         bg = Image(
-            source=bg_path,
-            allow_stretch=True,
-            keep_ratio=False,
-            size_hint=(1, 1),
-            pos=(0, 0),
+            source=bg_path,         # 探してきた画像ファイル
+            allow_stretch=True,     # 画像を引き伸ばすことを許可
+            keep_ratio=False,       # 縦横比（アスペクト比）は気にしない
+            size=Window.size,       # ★ ウインドウと同じサイズにする
+            size_hint=(None, None), # 親（画面全体）に対して「全体いっぱい」 
+            pos=(0,0),              # 左下から表示
         )
         self.add_widget(bg)
-
-        # 雲（Step02 と同じ）
-        for pos in [(80, 360), (420, 420), (720, 360)]:
+        
+        # 雲をいくつか配置する
+        # size_hint を None にして、ピクセルサイズを直接指定する。
+        cloud_positions = [
+            (80, 360),
+            (420, 420),
+            (620, 360),
+        ]
+        for x, y in cloud_positions:
             cloud = Image(
                 source=cloud_path,
-                size=(256, 96),
-                pos=pos,
+                size=(250, 96),
+                pos=(x, y),
                 size_hint=(None, None),
             )
             self.add_widget(cloud)
-
-        # 土管を1つ置く
+        
+        # 土管を一つ置く
         # ここでは「画面の左から 550px の位置」に配置しています。
         pipe = Image(
             source=dokan_path,
-            size=(64, 96),      # 推奨サイズ 64x96
-            pos=(550, 0),       # 地面(下端)にくっつけるイメージ
+            size=(64, 96),
+            pos=(550, 75),
             size_hint=(None, None),
         )
         self.add_widget(pipe)
 
-
+#----------------------------------------------
+# アプリ本体
+#----------------------------------------------
 class Step03DokanApp(App):
-    """Step03 用アプリ本体"""
-
+    
     def build(self):
-        Window.size = (960, 540)
-        self.title = "Pipe & Jump 10 Lessons - Step03 Pipe"
+        # ウインドウの初期サイズを決める
+        Window.size = (800, 540)
+        # ウインドウに表示するタイトル（左上にでる）
+        self.title = 'Pipe & Jump - Step03 Pipe'
+        # 先程作った画面（BackgroundCloudsPipe）を、最初の画面として返す
         return BackgroundCloudsPipe()
 
-
-if __name__ == "__main__":
+if __name__ == '__main__':
     Step03DokanApp().run()

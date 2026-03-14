@@ -1,147 +1,108 @@
-# step06_place_mario.py
-"""
-Step06: 主人公（配管工キャラ）を配置するステップ
+from pathlib import Path                    # ファイルやフォルダの場所を扱う標準ライブラリ
+from kivymd.app import MDApp as App         # kivyアプリの土台となるクラス
+from kivy.uix.widget import Widget          # 画面に置ける「何もない箱」のようなもの
+from kivy.uix.image import Image            # 画面を表示するための部品
+from kivy.core.window import Window         # ウインドウの大きさ等を扱うもの
+from kivy.properties import BooleanProperty # キャラの「向き」などを状態として持つために使います
+from kivy.core.audio import SoundLoader     # 音声ファイルを扱うためのもの
 
-★ねらい
-- 「主人公キャラ」をクラスとして定義する
-- まだ動かさず、「画面に立たせる」ことだけに集中する
-"""
-
-from pathlib import Path
-
-from kivymd.app import MDApp as App
-from kivy.uix.widget import Widget
-from kivy.uix.image import Image
-from kivy.core.window import Window
-from kivy.properties import BooleanProperty  # キャラの「向き」などを状態として持つために使います
-
-
+#----------------------------------------------
+# 画像ファイルが入っているフォルダへの「道」を作る
+#----------------------------------------------
 BASE_DIR = Path(__file__).resolve().parent
-ASSETS_DIR = BASE_DIR / "assets"
-IMG_DIR = ASSETS_DIR / "img"
+
+# assets/img フォルダまでのパスを組み立てる
+ASSETS_DIR = BASE_DIR / 'assets'
+IMG_DIR = ASSETS_DIR / 'img'
+BGM_DIR = ASSETS_DIR / 'bgm'
 
 
 def first_existing(*candidates: Path) -> str:
-    """画像ファイル候補の中から、最初に見つかったものを返します。"""
+    
     for p in candidates:
-        if p.is_file():
+        if p.is_file(): # 実際にそのファイルが存在するか
             return str(p)
+    
+    # 処理がここに来ている時点でファイルが存在しなかったことになる
     raise FileNotFoundError(
-        "必要な画像(bg, cloud, dokan, brick_block, hero_idle/mario)が足りません。assets/img を確認してください。"
+        "必要なファイルが見つかりません。assets/img と bgm を確認してください。"
     )
 
 
-class Hero(Image):
+def find_bgm() -> str:
+    """BGMファイルを探す
+        優先順位
+        bgm.ogg / bgm.mp3 / bgm.wav
+        main.ogg / main.mp3 / main.wav
+        の順に「見つかったもの」を1つ選びます。
     """
-    主人公キャラ用のクラス。
+    candidates = []
+    for stem in ('bgm','main'):
+        for ext in ('ogg','mp3','wav'):
+            candidates.append(BGM_DIR / f'{stem}.{ext}')
+    return first_existing(*candidates)
 
-    今は「立っているだけ」ですが、Step07 以降で
-    ・左右移動
-    ・ジャンプ
-    などの機能を少しずつ足していきます。
-    """
-
-    facing_left = BooleanProperty(False)  # 左向きなら True, 右向きなら False
-
-    def __init__(self, **kwargs):
-        # 主人公に使う画像を選びます。
-        # hero_idle.png があればそれを優先し、なければ mario.png を使います。
-        hero_path = first_existing(IMG_DIR / "hero_idle.png", IMG_DIR / "mario.png")
-
-        super().__init__(
-            source=hero_path,
-            allow_stretch=True,
-            keep_ratio=True,
-            **kwargs,
-        )
-
-        # キャラの表示サイズ（64x64 ピクセルくらい）
-        self.size = (64, 64)
-        self.size_hint = (None, None)
-
-        # テクスチャを左右反転しているかどうかのフラグ
-        # （Step07 で使いますが、ここではまだ出番はありません）
-        self._flipped = False
-
-    # 以下2つのメソッドは「左右反転」のためのものです（Step07 で使用）
-    def face_left(self):
-        """キャラを左向きにする（テクスチャを左右反転する）"""
-        if self._flipped:
-            return
-        if not self.texture:
-            return
-        tex = self.texture
-        tex.uvpos = (1, 0)
-        tex.uvsize = (-1, 1)
-        self.texture = tex
-        self.canvas.ask_update()
-        self._flipped = True
-        self.facing_left = True
-
-    def face_right(self):
-        """キャラを右向きに戻す"""
-        if not self._flipped:
-            return
-        if not self.texture:
-            return
-        tex = self.texture
-        tex.uvpos = (0, 0)
-        tex.uvsize = (1, 1)
-        self.texture = tex
-        self.canvas.ask_update()
-        self._flipped = False
-        self.facing_left = False
-
-
-class StaticStageWithHero(Widget):
-    """
-    背景 + 雲 + 土管 + レンガ + 主人公（静止）を表示する画面。
-
-    Step04 + Step05 のステージに、「立っているだけの主人公」を追加した形です。
-    """
-
+#----------------------------------------------
+# 背景画像 + 雲 + 土管 + レンガ + 主人公 を表示する
+#----------------------------------------------
+class BackgroundCloudsPipeBricksMario(Widget):
+    
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
 
-        bg_path = first_existing(IMG_DIR / "bg.png", IMG_DIR / "bg.jpg")
-        cloud_path = first_existing(IMG_DIR / "cloud.png")
-        dokan_path = first_existing(IMG_DIR / "dokan.png")
-        brick_path = first_existing(IMG_DIR / "brick_block.png")
-
-        # 背景
+        # 背景画像と雲画像のパスを探す
+        # bg.png か bg.jpg のどちらでも対応できるようにする
+        bg_path = first_existing(IMG_DIR / 'bg.png', IMG_DIR / 'bg.jpg')
+        cloud_path = first_existing(IMG_DIR / 'cloud.png')
+        dokan_path = first_existing(IMG_DIR / 'dokan.png')
+        brick_path = first_existing(IMG_DIR / 'brick_block.png')
+        mario_path = first_existing(IMG_DIR / 'mario.png')
+        
+        # 先ずは背景を一番下に敷きます
         bg = Image(
-            source=bg_path,
-            allow_stretch=True,
-            keep_ratio=False,
-            size_hint=(1, 1),
-            pos=(0, 0),
+            source=bg_path,         # 探してきた画像ファイル
+            allow_stretch=True,     # 画像を引き伸ばすことを許可
+            keep_ratio=False,       # 縦横比（アスペクト比）は気にしない
+            size=Window.size,       # ★ ウインドウと同じサイズにする
+            size_hint=(None, None), # 親（画面全体）に対して「全体いっぱい」 
+            pos=(0,0),              # 左下から表示
         )
         self.add_widget(bg)
-
-        # 雲
-        for pos in [(80, 360), (420, 420), (720, 360)]:
+        
+        # 雲をいくつか配置する
+        # size_hint を None にして、ピクセルサイズを直接指定する。
+        cloud_positions = [
+            (80, 360),
+            (420, 420),
+            (620, 360),
+        ]
+        for x, y in cloud_positions:
             cloud = Image(
                 source=cloud_path,
-                size=(256, 96),
-                pos=pos,
+                size=(250, 96),
+                pos=(x, y),
                 size_hint=(None, None),
             )
             self.add_widget(cloud)
-
-        # 土管
+        
+        # 土管を一つ置く
+        # ここでは「画面の左から 550px の位置」に配置しています。
         pipe = Image(
             source=dokan_path,
             size=(64, 96),
-            pos=(550, 0),
+            pos=(550, 75),
             size_hint=(None, None),
         )
         self.add_widget(pipe)
 
-        # レンガ
+        # レンガブロックを横一列に並べる
+        # 「for ループで少しずつ x 座標をずらす」
         brick_y = 200
-        brick_w, brick_h = 128, 32
+        brick_w, brick_h = 32, 32
+        base_x = 300
         for i in range(4):
-            x = 300 + i * brick_w
+            x = base_x + i * brick_w
+            # ブロックの配置位置決め            
             brick = Image(
                 source=brick_path,
                 size=(brick_w, brick_h),
@@ -149,22 +110,53 @@ class StaticStageWithHero(Widget):
                 size_hint=(None, None),
             )
             self.add_widget(brick)
+        
+        mario = Image(
+            source=mario_path,
+            size=(48, 48),
+            pos=(120, 80),
+            size_hint=(None, None)
+        )
+        self.add_widget(mario)
 
-        # 主人公（まだ動かない）
-        hero = Hero()
-        # 地面から少し上(96)の位置に立たせてみます
-        hero.pos = (120, 96)
-        self.add_widget(hero)
-
-
-class Step06PlaceMarioApp(App):
-    """Step06 用アプリ本体"""
-
+#----------------------------------------------
+# アプリ本体
+#----------------------------------------------
+class Step06MarioApp(App):
+    # 初期化（コンストラクタ）
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+        self.bgm = None  # あとでSoundオブジェクトを入れるための変数
+        
     def build(self):
-        Window.size = (960, 540)
-        self.title = "Pipe & Jump 10 Lessons - Step06 Place Hero"
-        return StaticStageWithHero()
+        # ウインドウの初期サイズを決める
+        Window.size = (800, 540)
+        # ウインドウに表示するタイトル（左上にでる）
+        self.title = 'Pipe & Jump - Step06 Mario'
+        # 先程作った画面（BackgroundCloudsPipeBricks）を、最初の画面として返す
+        return BackgroundCloudsPipeBricksMario()
+
+    def on_start(self):
+        '''アプリ起動時に自動的にこの関数が呼ばれます。ここでBGMを鳴らします'''
+        try:
+            bgm_path = find_bgm()
+        except FileNotFoundError as e:
+            # BGMがなくてもゲームは動いてほしいので、エラーを表示するだけにして止めません。
+            print(e)
+            return
+
+        self.bgm = SoundLoader.load(bgm_path)
+        if self.bgm:
+            self.bgm.loop = True # ループ再生を有効にする
+            self.bgm.play()      # BGMを再生する
+        else:
+            print('BGMを読み込めませんでした。ファイル形式やパスを確認してください。')
+            
+    def on_stop(self):
+        '''アプリ終了時に自動的にこの関数が呼ばれます。ここでBGMを止めます'''
+        if self.bgm:
+            self.bgm.stop()
 
 
-if __name__ == "__main__":
-    Step06PlaceMarioApp().run()
+if __name__ == '__main__':
+    Step06MarioApp().run()
